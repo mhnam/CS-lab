@@ -3,11 +3,11 @@ read dirname #directory 이름을 입력을 저장
 
 if [ -n "$dirname" ]
 then
-        if [ -d "$dirname" ]
+        if [[ -d "$dirname" ]] && [[ -w "$dirname" ]] && [[ "$(ls -A "$dirname")" ]]
         then
                 cd "$dirname"
         else
-                echo "ERROR: invalid directory name (""$dirname"")"
+                echo "ERROR: please check directory name - may be wrong, empty or have no permission (""$dirname"")"
                 echo "MESSAGE: process does not completed successfully"
                 exit
         fi
