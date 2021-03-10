@@ -5,19 +5,27 @@ void Remove_Blanks_At_The_End( char *line ) {
 
 	// 전체 문장에 대하여 line[k] 가 줄바꿈이면 flag를 1로 set, '\0'이면 ~~
 	for ( k = 0; ; k++ ) {
-
-	}
+        if( line[k] == '\n' ){
+            newline_flag = 1;
+            break;
+        }
+        else if( line[k] == '\0' ){
+            newline_flag = 0;
+            break;
+        }
+	} /*k is now set as the last index of the given line*/
 	// 전체 문장에 대하여 line[i]가 space가 아니라면 break,
 	for ( i = k-1; i >= 0; i-- ) {
-
+        if ( line[i] != ' ' ) break;
 	}
 	i++;
 	// flag가 1일때 문장의 마지막은 줄바꿈&space, flag가 1이 아니라면 '\0'
-	if ( newline_flag == 1 ) {
-
+	if ( newline_flag == 1 ) { 
+        line[i] = '\n';
+        line[i+1] = ' ';
 	}
-	else {
-
+	else { /*if the line is the last line of the file*/
+        line[i] = '\0';
 	}
 }
 
