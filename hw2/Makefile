@@ -2,7 +2,7 @@ cc=gcc
 cflags = -W -g
 target = main
 
-objects = main.o count.o output.o
+objects = main.o count.o printout.o
 
 $(target) : $(objects)
 	$(cc) $(cflags) -o $(target) $(objects)
