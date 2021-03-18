@@ -3,7 +3,7 @@
 #include "Array.h"
 
 class RangeArray : public Array{
-	protected : 
+	protected :
 		int low;
 		int high;
 	public :
@@ -15,6 +15,6 @@ class RangeArray : public Array{
 
 		int& operator[](int);
 		int operator[](int) const;
-	
+
 };
 #endif

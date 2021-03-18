@@ -5,12 +5,13 @@ using namespace std;
 RangeArray::RangeArray(int i,int j):Array(j-i+1)
 {
 	low = i;
-	high = j; 
+	high = j;
 }
 
 RangeArray::~RangeArray()
 {
-	
+	delete(low);
+	delete(high);
 }
 
 int RangeArray::baseValue()
@@ -26,6 +27,6 @@ int& RangeArray::operator [](int i)
 	return Array::operator [](i-low);
 }
 int RangeArray::operator [](int i) const
-{	
+{
 	return Array::operator [](i-low);
 }
