@@ -19,6 +19,7 @@ Array::~Array()
 {
 	// 소멸자; 할당된 메모리 해제
 	delete(data);
+    data = NULL;
 }
 int Array::length() const
 {
@@ -35,7 +36,6 @@ int& Array::operator[](int i) // 배열에 원소 삽입
 	if(i >= 0 && i < len)
 	{
         return data[i];
-		// cout<<"*data: "<<*data<<endl;
 	}
 	else
 	{

@@ -11,6 +11,7 @@ RangeArray::RangeArray(int i,int j):Array(j-i+1)
 RangeArray::~RangeArray()
 {
 	delete(data);
+    data = NULL;
 }
 
 int RangeArray::baseValue()
