@@ -1,6 +1,6 @@
 #include "Array.h"
 #include <cstdlib>
-#include<iostream>
+#include <iostream>
 using namespace std;
 Array::Array(int size)
 {
@@ -11,20 +11,19 @@ Array::Array(int size)
 	}
 	else
 	{
+        data = new int[size];
 		len = size;
-		cout<<"Array created!"<<endl;
 	}
 }
 Array::~Array()
 {
 	// 소멸자; 할당된 메모리 해제
 	delete(data);
-	cout<<"Array deleted!"<<endl;
 }
 int Array::length() const
 {
 	// 배열의 크기 리턴
-	retun len;
+	return len;
 }
 
 // 배열에 원소를 대입하거나 값을 반환하는 부분으로 []연산자의 오버로딩이다
@@ -35,7 +34,8 @@ int& Array::operator[](int i) // 배열에 원소 삽입
 	// 배열의 인덱스가 범위 내에 있으면 값 리턴, 그렇지 않으면 에러메세지 출력하고 tmp리턴
 	if(i >= 0 && i < len)
 	{
-		data[i] =
+        return data[i];
+		// cout<<"*data: "<<*data<<endl;
 	}
 	else
 	{
@@ -61,6 +61,6 @@ void Array::print() //배열의 모든 내용을 출력해주는 함수
 {
 	int i;
 	cout<<"[";
-	for(i=0; i<len; i++) cout<<" "<<i;
+	for(i=0; i<len; i++) cout<<" "<<data[i];
 	cout<<"]"<<endl;
 }

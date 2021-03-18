@@ -10,8 +10,7 @@ RangeArray::RangeArray(int i,int j):Array(j-i+1)
 
 RangeArray::~RangeArray()
 {
-	delete(low);
-	delete(high);
+	delete(data);
 }
 
 int RangeArray::baseValue()
