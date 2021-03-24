@@ -13,7 +13,7 @@ int main(void)
     Str a("I'm a girl");
 	cout << a.contents()<<endl;
 	cout << a.length()<<endl;
-    a=c;
+    a="I'm a boy\n";
 	cout << a.contents()<<endl;
 	cout << a.length()<<endl;
 	cout << a.compare("I'm a a") << endl;

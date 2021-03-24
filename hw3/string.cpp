@@ -22,7 +22,7 @@ Str::Str(char* neyong)
 {
     string tmp(neyong);
     str = neyong;
-	len = str.length();
+	len = tmp.length();
 }
 
 Str::~Str()
@@ -58,7 +58,7 @@ int Str::compare(char *a)
 void Str::operator=(char *a)
 {
 	// string의 값을 대입
-    Str tmp(a);
+    string tmp(a);
     str = a;
 	len = tmp.length();
 }
