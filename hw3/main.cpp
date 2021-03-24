@@ -4,10 +4,19 @@ using namespace std;
 
 int main(void)
 {
-	Str a("I'm a girl");
-	cout << a.contents();
-	a="I'm a boy\n";
-	cout << a.contents();
+    Str c(5);
+	cout << c.contents()<<endl;
+	cout << c.length()<<endl;
+    c = "I'm a a";
+	cout << c.contents()<<endl;
+	cout << c.length()<<endl;
+    Str a("I'm a girl");
+	cout << a.contents()<<endl;
+	cout << a.length()<<endl;
+    a=c;
+	cout << a.contents()<<endl;
+	cout << a.length()<<endl;
 	cout << a.compare("I'm a a") << endl;
+    cout << a.compare(c) << endl;
 	return 0;
 }
