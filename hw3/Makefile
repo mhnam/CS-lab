@@ -4,7 +4,7 @@ SRC = main.cpp string.cpp
 CC = g++
 CFLAGS = -c
 
-TARGET = test
+TARGET = a.out
 
 $(TARGET): $(OBJECTS) String.h
 	$(CC) -o $(TARGET) $(OBJECTS)
