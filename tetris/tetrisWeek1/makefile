@@ -1,5 +1,5 @@
-﻿all	: tetris.o
-	gcc -lncurses tetris.c
+all	: tetris.o
+	gcc tetris.c -lncurses
 
 clean:
 	rm a.out *.o
