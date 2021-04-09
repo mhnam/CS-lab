@@ -165,10 +165,6 @@ void DrawBlock(int y, int x, int blockID,int blockRotate,char tile){
 				attron(A_REVERSE);
 				printw("%c",tile);
 				attroff(A_REVERSE);
-				move(i+y+1,j+x+1);
-				attron(A_REVERSE);
-				printw("%c",tile);
-				attroff(A_REVERSE);
 			}
 		}
     }

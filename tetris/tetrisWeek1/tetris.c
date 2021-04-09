@@ -338,7 +338,6 @@ int DeleteLine(char f[HEIGHT][WIDTH]){
     //1. 필드를 탐색하여, 꽉 찬 구간이 있는지 탐색한다.
 	//2. 꽉 찬 구간이 있으면 해당 구간을 지운다. 즉, 해당 구간으로 필드값을 한칸씩 내린다.
     int i, j, k, l;
-    int score = 0;
     int fl = 1;
     for(i=HEIGHT-1; i>=0; i--){
         for(j=0; j<WIDTH; j++){
