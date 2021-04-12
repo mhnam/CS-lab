@@ -308,7 +308,7 @@ void BlockDown(int sig){
         
         //there is a block below. stop and fix to field
         AddBlockToField(field, nextBlock[0], blockRotate, blockY, blockX); 
-        score = score + DeleteLine(field);
+        score = DeleteLine(field);
         PrintScore(score);
         
         //update block
