@@ -34,6 +34,7 @@ void InitTetris(){
 
 	nextBlock[0]=rand()%7;
 	nextBlock[1]=rand()%7;
+	nextBlock[2]=rand()%7;
 	blockRotate=0;
 	blockY=-1;
 	blockX=WIDTH/2-2;
@@ -43,7 +44,7 @@ void InitTetris(){
 
 	DrawOutline();
 	DrawField();
-	DrawBlock(blockY,blockX,nextBlock[0],blockRotate,' ');
+	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate);
 	DrawNextBlock(nextBlock);
 	PrintScore(score);
 }
@@ -58,10 +59,14 @@ void DrawOutline(){
 	printw("NEXT BLOCK");
 	DrawBox(3,WIDTH+10,4,8);
 
-	/* score를 보여주는 공간의 태두리를 그린다.*/
 	move(9,WIDTH+10);
+	printw("NEXT BLOCK");
+	DrawBox(10,WIDTH+10,4,8);
+
+    /* score를 보여주는 공간의 태두리를 그린다.*/
+	move(16,WIDTH+10);
 	printw("SCORE");
-	DrawBox(10,WIDTH+10,1,8);
+	DrawBox(17,WIDTH+10,1,8);
 }
 
 int GetCommand(){
@@ -137,7 +142,7 @@ void DrawField(){
 
 
 void PrintScore(int score){
-	move(11,WIDTH+11);
+	move(18,WIDTH+11); /*todo: check whether the position is okay*/
 	printw("%8d",score);
 }
 
@@ -147,6 +152,17 @@ void DrawNextBlock(int *nextBlock){
 		move(4+i,WIDTH+13);
 		for( j = 0; j < 4; j++ ){
 			if( block[nextBlock[1]][0][i][j] == 1 ){
+				attron(A_REVERSE);
+				printw(" ");
+				attroff(A_REVERSE);
+			}
+			else printw(" ");
+		}
+	}
+	for( i = 0; i < 4; i++ ){
+		move(11+i,WIDTH+13); /*todo: check whether the position is okay*/
+		for( j = 0; j < 4; j++ ){
+			if( block[nextBlock[2]][0][i][j] == 1 ){
 				attron(A_REVERSE);
 				printw(" ");
 				attroff(A_REVERSE);
@@ -293,7 +309,7 @@ void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,int blockRota
     }
     
     //3. 새로운 블록 정보를 그린다.
-    DrawBlock(blockY,blockX,currentBlock,blockRotate,' ');
+    DrawBlockWithFeatures(blockY,blockX,currentBlock,blockRotate);
 }
 
 void BlockDown(int sig){
@@ -307,13 +323,14 @@ void BlockDown(int sig){
         if(blockY == -1) gameOver = TRUE;
         
         //there is a block below. stop and fix to field
-        AddBlockToField(field, nextBlock[0], blockRotate, blockY, blockX); 
+        score = score + AddBlockToField(field, nextBlock[0], blockRotate, blockY, blockX); 
         score = DeleteLine(field);
         PrintScore(score);
         
         //update block
         nextBlock[0] = nextBlock[1];
-        nextBlock[1] = rand()%7;
+        nextBlock[1] = nextBlock[2];
+        nextBlock[2] = rand()%7;
         DrawNextBlock(nextBlock);
         
         //initialise location of currentBlock
@@ -323,15 +340,19 @@ void BlockDown(int sig){
     }
 }
 
-void AddBlockToField(char f[HEIGHT][WIDTH],int currentBlock,int blockRotate, int blockY, int blockX){
+int AddBlockToField(char f[HEIGHT][WIDTH],int currentBlock,int blockRotate, int blockY, int blockX){
 	//Block이 추가된 영역의 필드값을 바꾼다.
     int i, j;
+    int touched = 0;
     for(i=0; i<4; i++){
         for(j=0; j<4; j++){
-            if(block[currentBlock][blockRotate][i][j])
+            if(block[currentBlock][blockRotate][i][j]){
                 f[blockY+i][blockX+j] = 1;
+                touched++;
+            }
         }
     }
+    return touched * 10;
 }
 
 int DeleteLine(char f[HEIGHT][WIDTH]){
@@ -339,20 +360,20 @@ int DeleteLine(char f[HEIGHT][WIDTH]){
 	//2. 꽉 찬 구간이 있으면 해당 구간을 지운다. 즉, 해당 구간으로 필드값을 한칸씩 내린다.
     int i, j, k, l;
     int fl = 1;
+    int deletedline = 0;
     for(i=HEIGHT-1; i>=0; i--){
         for(j=0; j<WIDTH; j++){
             if(f[i][j] == 0){
                 fl = 0;
             }
-            if((j == WIDTH - 1) && (fl == 1)){
-                score++;
-                if(j == WIDTH-1){ /*loop went over till the end of the row*/
-                    for(k=i-1; k>=0; k--){
-                        for(l=0; l<WIDTH; l++){
-                            f[k+1][l] = f[k][l]; /*update whole field above the row*/
-                            if(k == 0){
-                                f[k][l] = 0; /*initialise as 0 for the first row*/
-                            }
+            if((j == WIDTH - 1) && (fl == 1)){ /*if the row is filled till the end*/
+                deletedline ++;
+                /*then delete whole line*/
+                for(k=i-1; k>=0; k--){
+                    for(l=0; l<WIDTH; l++){
+                        f[k+1][l] = f[k][l]; /*update whole field from previous row*/
+                        if(k == 0){
+                            f[k][l] = 0; /*initialise as 0 for the first row*/
                         }
                     }
                 }
@@ -361,13 +382,25 @@ int DeleteLine(char f[HEIGHT][WIDTH]){
         fl = 1;
     }
     DrawField();
+    score = score + (deletedline << 2)*100;
     return score;
 }
 
 ///////////////////////////////////////////////////////////////////////////
 
 void DrawShadow(int y, int x, int blockID,int blockRotate){
-	// user code
+    int i=y;
+    for(i=y; i<HEIGHT-1; i++){
+        if (!CheckToMove(field, blockID, blockRotate, i, x))
+            break;
+    }
+	DrawBlock(--i, x, blockID, blockRotate, '/');
+}
+
+void DrawBlockWithFeatures(int y, int x, int blockID, int blockRotate){
+    DrawField();
+	DrawBlock(y, x, blockID, blockRotate, ' ');
+	DrawShadow(y, x, blockID, blockRotate);
 }
 
 void createRankList(){
