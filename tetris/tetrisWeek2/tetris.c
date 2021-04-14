@@ -1,7 +1,8 @@
 #include "tetris.h"
 
 static struct sigaction act, oact;
-int B,count;
+int B,count,score_number;
+RankPointer ranklist = NULL;
 
 int main(){
 	int exit=0;
@@ -9,6 +10,7 @@ int main(){
 	initscr();
 	noecho();
 	keypad(stdscr, TRUE);
+    createRankList();
 
 	srand((unsigned int)time(NULL));
 
@@ -16,7 +18,8 @@ int main(){
 		clear();
 		switch(menu()){
 		case MENU_PLAY: play(); break;
-		case MENU_EXIT: exit=1; break;
+		case MENU_RANK: rank(); break;
+        case MENU_EXIT: exit=1; break;
 		default: break;
 		}
 	}
@@ -42,7 +45,7 @@ void InitTetris(){
 	score=0;	
 	gameOver=0;
 	timed_out=0;
-
+    
 	DrawOutline();
 	DrawField();
 	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate);
@@ -409,10 +412,13 @@ void createRankList(){
 	// 3. LinkedList로 저장
 	// 4. 파일 닫기
 	FILE *fp;
-	int i, j;
+	int i, j, len;
+    int cnt = EOF;
+    int score;
+    char name[NAMELEN];
 
 	//1. 파일 열기
-	fp = fopen("rnak.txt", "r");
+	fp = fopen("rank.txt", "r");
 
 	// 2. 정보읽어오기
 	/* int fscanf(FILE* stream, const char* format, ...);
@@ -421,16 +427,15 @@ void createRankList(){
 	변수의 주소: 포인터
 	return: 성공할 경우, fscanf 함수는 읽어들인 데이터의 수를 리턴, 실패하면 EOF리턴 */
 	// EOF(End Of File): 실제로 이 값은 -1을 나타냄, EOF가 나타날때까지 입력받아오는 if문
-	if (fscanf() != EOF) {
-
-
-
-
+	if (!feof(fp)) {
+        fscanf(fp, "%d", &score_number);
+        for(i=0; i<score_number; i++){
+            fscanf(fp, "%s %d", name, &score);
+            insert(&ranklist, score, name);
+            cnt++;
+        }
 	}
-	else {
 
-
-	}
 	// 4. 파일닫기
 	fclose(fp);
 }
@@ -438,73 +443,132 @@ void createRankList(){
 void rank(){
 	//목적: rank 메뉴를 출력하고 점수 순으로 X부터~Y까지 출력함
 	//1. 문자열 초기화
-	int X=1, Y=score_number, ch, i, j;
+	int X=1, Y=5, ch, i, j;
+    int cnt = 0;
+    RankPointer cur = ranklist;
 	clear();
 
 	//2. printw()로 3개의 메뉴출력
-
+	printw("1. List ranks from X to Y\n");
+	printw("2. List ranks by a specific name\n");
+	printw("3. Delete a specific rank X\n");
 
 	//3. wgetch()를 사용하여 변수 ch에 입력받은 메뉴번호 저장
-
+    ch = wgetch(stdscr);
 
 	//4. 각 메뉴에 따라 입력받을 값을 변수에 저장
 	//4-1. 메뉴1: X, Y를 입력받고 적절한 input인지 확인 후(X<=Y), X와 Y사이의 rank 출력
 	if (ch == '1') {
-
+        echo();
+        printw("X: ");
+        ch = wgetch(stdscr);
+        if(ch!=10)
+            X = ch-48;
+        printw("\nY: ");
+        ch = wgetch(stdscr);
+        if(ch!=10)
+            Y = ch-48;
+        if(X>Y)
+            printw("search failure: no rank in the list\n");
+        else{
+            printw("\n    name    |    score    ");
+            printw("\n===========================");
+            if(!(IS_EMPTY(ranklist))){
+                for(; cur; cur = cur -> next){
+                    cnt++;
+                    if(cnt>=X && cnt <= Y){
+                        printw("\n%s%9.0d", cur->name, cur->score);
+                    }
+                    if(cnt>Y)
+                        break;
+                }
+            }
+        }
+        noecho();
 	}
 
 	//4-2. 메뉴2: 문자열을 받아 저장된 이름과 비교하고 이름에 해당하는 리스트를 출력
-	else if ( ch == '2') {
-		char str[NAMELEN+1];
-		int check = 0;
-
-
-	}
+	// else if ( ch == '2') {
+	// 	char str[NAMELEN+1];
+	// 	int check = 0;
+        
+	// }
 
 	//4-3. 메뉴3: rank번호를 입력받아 리스트에서 삭제
-	else if ( ch == '3') {
-		int num;
+	// else if ( ch == '3') {
+	// 	int num;
 
-	}
+	// }
+    
 	getch();
-
 }
 
 void writeRankFile(){
 	// 목적: 추가된 랭킹 정보가 있으면 새로운 정보를 "rank.txt"에 쓰고 없으면 종료
 	int sn, i;
+    int cnt = 0;
+    RankPointer cur = ranklist;
+    
 	//1. "rank.txt" 연다
-	FILE *fp = fopen("rank.txt", "r");
+	FILE *fp = fopen("rank.txt", "w");
 
-	//2. 랭킹 정보들의 수를 "rank.txt"에 기록
+    if(ranklist){
+        //2. 랭킹 정보들의 수를 "rank.txt"에 기록
+        fprintf(fp, "%d", score_number);
+        fprintf(fp, "\n");
+        //3. 탐색할 노드가 더 있는지 체크하고 있으면 다음 노드로 이동, 없으면 종료
+        for(; cur; cur = cur->next){
+            fwrite(cur->name, sizeof(cur->name), 1, fp);
+            fprintf(fp, " ");
+            fprintf(fp, "%d", cur->score);
+            fprintf(fp, "\n");
+        }
+    }
+    
+    fclose(fp);
 
-	//3. 탐색할 노드가 더 있는지 체크하고 있으면 다음 노드로 이동, 없으면 종료
-	if ( sn == score_number) return;
-	else {
+    //     for(; ranklist; ranklist = ranklist->next){
+    //         ranklist->next = ranklist->next->next;
+    //         free(ranklist->next)
+    //     }
+    //     free(ranklist);
+	// if ( sn == score_number) return;
+	// else {
 
 
-	}
-	for ( i= 1; i < score_number+1 ; i++) {
-		free(a.rank_name[i]);
-	}
-	free(a.rank_name);
-	free(a.rank_score);
+	// }
+	// for ( i= 1; i < score_number+1 ; i++) {
+	// 	free(a.rank_name[i]);
+	// }
+	// free(a.rank_name);
+	// free(a.rank_score);
 }
 
 void newRank(int score){
 	// 목적: GameOver시 호출되어 사용자 이름을 입력받고 score와 함께 리스트의 적절한 위치에 저장
 	char str[NAMELEN+1];
 	int i, j;
+    char ch;
+    int cnt = 0;
 	clear();
+    
 	//1. 사용자 이름을 입력받음
-
+    echo();
+	printw("Enter your name: ");
+    ch = wgetch(stdscr);
+    while(ch != '\n' && cnt < NAMELEN){
+        str[cnt] = ch;
+        ch = wgetch(stdscr);
+        if(ch == '\n') break;
+        cnt ++;
+    }
+    noecho();
+    
 	//2. 새로운 노드를 생성해 이름과 점수를 저장, score_number가
-	if() {
-
-	}
-	else {
-
-	}
+	if(!str)
+        strcpy(str, "N/A");
+    insert(&ranklist, score, str);
+    score_number++;
 	writeRankFile();
 }
 
