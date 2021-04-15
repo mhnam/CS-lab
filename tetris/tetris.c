@@ -359,7 +359,6 @@ int AddBlockToField(char f[HEIGHT][WIDTH],int currentBlock,int blockRotate, int 
             }
         }
     }
-    printw("%d", touched);
     return touched * 10;
 }
 

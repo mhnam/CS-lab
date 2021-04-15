@@ -349,8 +349,15 @@ int AddBlockToField(char f[HEIGHT][WIDTH],int currentBlock,int blockRotate, int 
     for(i=0; i<4; i++){
         for(j=0; j<4; j++){
             if(block[currentBlock][blockRotate][i][j]){
+                if (f[blockY+i+1][blockX+j] == 1 || blockY+i+1 == HEIGHT)
+                    touched++;
+            }
+        }
+    }
+    for(i=0; i<4; i++){
+        for(j=0; j<4; j++){
+            if(block[currentBlock][blockRotate][i][j]){
                 f[blockY+i][blockX+j] = 1;
-                touched++;
             }
         }
     }
