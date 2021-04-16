@@ -21,11 +21,11 @@
 
 // menu number
 #define MENU_PLAY '1'
+#define MENU_RANK '2'
 #define MENU_EXIT '4'
 
 // 사용자 이름의 길이
 #define NAMELEN 16
-
 #define CHILDREN_MAX 36
 
 typedef struct _RecNode{
@@ -33,6 +33,55 @@ typedef struct _RecNode{
 	char (*f)[WIDTH];
 	struct _RecNode *c[CHILDREN_MAX];
 } RecNode;
+
+typedef struct RankNode* RankPointer;
+
+typedef struct RankNode{
+	int score;
+	char name[NAMELEN];
+    RankPointer next;
+} RankNode;
+
+#define IS_EMPTY(ptr)(!(ptr))
+#define IS_FULL(ptr)(!(ptr))
+
+void insert(RankPointer* ptr, int score, char* name);
+// void delete(RankPointer *ptr, RankPointer before, RankPointer want_to_delete);
+
+void insert(RankPointer* ptr, int score, char* name){ /* insert new node after before, while ptr is the first node */
+    RankPointer entry = (RankPointer)malloc(sizeof(RankNode));
+    
+    if(IS_FULL(entry)){ /* memory allocation error */
+        printf("the memory is full");
+        exit(1);
+    }
+
+    if(*ptr){ /* if there is at least one node in the list */
+        RankPointer cur = *ptr;
+        RankPointer prev = cur;
+        while(cur){
+            if(score >= cur->score){
+                entry -> score = score; strcpy(entry -> name, name);
+                entry -> next = cur;
+                if(cur == *ptr) /*the largest*/
+                    *ptr = entry;
+                else /*in between*/
+                    prev -> next = entry;
+                break;
+            }
+            prev = cur;
+            cur = cur->next;
+        }
+        if(!cur){
+            entry -> score = score; strcpy(entry -> name, name);
+            prev -> next = entry; entry -> next = NULL;
+        }
+    }
+    else{ /*the first entry*/
+        entry -> next = NULL; entry -> score = score;
+        strcpy(entry -> name, name); *ptr = entry;
+    }
+}
 
 /* [blockShapeID][# of rotate][][]*/
 const char block[NUM_OF_SHAPE][NUM_OF_ROTATE][BLOCK_HEIGHT][BLOCK_WIDTH] ={
@@ -353,7 +402,7 @@ void newRank(int score);
  *	input	: (RecNode*) 추천 트리의 루트
  *	return	: (int) 추천 블럭 배치를 따를 때 얻어지는 예상 스코어
  ***********************************************************/
-int recommend(RecNode *root);
+int recommend(char fieldOri[HEIGHT][WIDTH],int lv);
 
 /***********************************************************
  *	추천 기능에 따라 블럭을 배치하여 진행하는 게임을 시작한다.
@@ -361,6 +410,8 @@ int recommend(RecNode *root);
  *	return	: none
  ***********************************************************/
 void recommendedPlay();
+
+void DrawRecommend(int y, int x, int blockID,int blockRotate);
 
 
 #endif

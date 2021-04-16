@@ -1,3 +1,9 @@
+/*
+TODO
+* space 누르면 제일 밑으로 내려가도록 구현
+* rank 기능 2가지 추가구현
+*/
+
 #include "tetris.h"
 
 static struct sigaction act, oact;
@@ -19,7 +25,7 @@ int main(){
 		switch(menu()){
 		case MENU_PLAY: play(); break;
 		case MENU_RANK: rank(); break;
-        case MENU_EXIT: exit=1; break;
+    case MENU_EXIT: exit=1; break;
 		default: break;
 		}
 	}
@@ -42,10 +48,10 @@ void InitTetris(){
 	blockRotate=0;
 	blockY=-1;
 	blockX=WIDTH/2-2;
-	score=0;	
+	score=0;
 	gameOver=0;
 	timed_out=0;
-    
+
 	DrawOutline();
 	DrawField();
 	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate);
@@ -53,7 +59,7 @@ void InitTetris(){
 	PrintScore(score);
 }
 
-void DrawOutline(){	
+void DrawOutline(){
 	int i,j;
 	/* 블럭이 떨어지는 공간의 태두리를 그린다.*/
 	DrawBox(0,0,HEIGHT,WIDTH);
@@ -126,7 +132,7 @@ int ProcessCommand(int command){
 		break;
 	}
 	if(drawFlag) DrawChange(field,command,nextBlock[0],blockRotate,blockY,blockX);
-	return ret;	
+	return ret;
 }
 
 void DrawField(){
@@ -231,7 +237,7 @@ void play(){
 			printw("Good-bye!!");
 			refresh();
 			getch();
-
+                        newRank(score);
 			return;
 		}
 	}while(!gameOver);
@@ -299,7 +305,7 @@ void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,int blockRota
 	default:
 		break;
 	}
-    
+
     //2. 이전 블록 정보를 지운다. DrawBlock함수 참조할 것.
 	for(i=0;i<4;i++){
 		for(j=0;j<4;j++){
@@ -309,7 +315,7 @@ void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,int blockRota
 			}
 		}
     }
-    
+
     //3. 새로운 블록 정보를 그린다.
     DrawBlockWithFeatures(blockY,blockX,currentBlock,blockRotate);
 }
@@ -319,22 +325,22 @@ void BlockDown(int sig){
     if (CheckToMove(field, nextBlock[0], blockRotate, blockY+1, blockX)){
         blockY++;
         DrawChange(field, KEY_DOWN, nextBlock[0], blockRotate, blockY, blockX);
-    } 
+    }
     else{ /*block cannot go further*/
         //current block is at -1 (initial): GAMEOVER!!
         if(blockY == -1) gameOver = TRUE;
-        
+
         //there is a block below. stop and fix to field
-        score = score + AddBlockToField(field, nextBlock[0], blockRotate, blockY, blockX); 
+        score = score + AddBlockToField(field, nextBlock[0], blockRotate, blockY, blockX);
         score = DeleteLine(field);
         PrintScore(score);
-        
+
         //update block
         nextBlock[0] = nextBlock[1];
         nextBlock[1] = nextBlock[2];
         nextBlock[2] = rand()%7;
         DrawNextBlock(nextBlock);
-        
+
         //initialise location of currentBlock
         blockRotate=0;
         blockY=-1;/*top*/
@@ -420,9 +426,9 @@ void createRankList(){
 	// 4. 파일 닫기
 	FILE *fp;
 	int i, j, len;
-    int cnt = EOF;
-    int score;
-    char name[NAMELEN];
+  int cnt = EOF;
+  int score;
+  char name[NAMELEN];
 
 	//1. 파일 열기
 	fp = fopen("rank.txt", "r");
@@ -450,9 +456,9 @@ void createRankList(){
 void rank(){
 	//목적: rank 메뉴를 출력하고 점수 순으로 X부터~Y까지 출력함
 	//1. 문자열 초기화
-	int X=1, Y=5, ch, i, j;
-    int cnt = 0;
-    RankPointer cur = ranklist;
+	int X=1, Y=score_number, ch, i, j;
+  int cnt = 0;
+  RankPointer cur = ranklist;
 	clear();
 
 	//2. printw()로 3개의 메뉴출력
@@ -461,44 +467,41 @@ void rank(){
 	printw("3. Delete a specific rank X\n");
 
 	//3. wgetch()를 사용하여 변수 ch에 입력받은 메뉴번호 저장
-    ch = wgetch(stdscr);
+  ch = wgetch(stdscr);
 
 	//4. 각 메뉴에 따라 입력받을 값을 변수에 저장
 	//4-1. 메뉴1: X, Y를 입력받고 적절한 input인지 확인 후(X<=Y), X와 Y사이의 rank 출력
 	if (ch == '1') {
-        echo();
-        printw("X: ");
-        ch = wgetch(stdscr);
-        if(ch!=10)
-            X = ch-48;
-        printw("\nY: ");
-        ch = wgetch(stdscr);
-        if(ch!=10)
-            Y = ch-48;
-        if(X>Y)
-            printw("search failure: no rank in the list\n");
-        else{
-            printw("\n    name    |    score    ");
-            printw("\n===========================");
-            if(!(IS_EMPTY(ranklist))){
-                for(; cur; cur = cur -> next){
-                    cnt++;
-                    if(cnt>=X && cnt <= Y){
-                        printw("\n%s%9.0d", cur->name, cur->score);
-                    }
-                    if(cnt>Y)
-                        break;
-                }
+    printw("X: ");
+    echo();
+    scanw("%d", &X);
+    printw("Y: ");
+    echo();
+    scanw("%d", &Y);
+    if(X>Y)
+        printw("search failure: no rank in the list\n");
+    else{
+      printw("\n    name    |    score    ");
+      printw("\n===========================");
+      if(!(IS_EMPTY(ranklist))){
+        for(; cur; cur = cur -> next){
+            cnt++;
+            if(cnt>=X && cnt <= Y){
+              printw("\n%-20s%-10d", cur->name, cur->score);
             }
+            if(cnt>Y)
+              break;
         }
-        noecho();
+      }
+    }
+		noecho();
 	}
 
 	//4-2. 메뉴2: 문자열을 받아 저장된 이름과 비교하고 이름에 해당하는 리스트를 출력
 	// else if ( ch == '2') {
 	// 	char str[NAMELEN+1];
 	// 	int check = 0;
-        
+
 	// }
 
 	//4-3. 메뉴3: rank번호를 입력받아 리스트에서 삭제
@@ -506,7 +509,7 @@ void rank(){
 	// 	int num;
 
 	// }
-    
+
 	getch();
 }
 
@@ -515,7 +518,7 @@ void writeRankFile(){
 	int sn, i;
     int cnt = 0;
     RankPointer cur = ranklist;
-    
+
 	//1. "rank.txt" 연다
 	FILE *fp = fopen("rank.txt", "w");
 
@@ -531,7 +534,7 @@ void writeRankFile(){
             fprintf(fp, "\n");
         }
     }
-    
+
     fclose(fp);
 
     //     for(; ranklist; ranklist = ranklist->next){
@@ -555,27 +558,19 @@ void newRank(int score){
 	// 목적: GameOver시 호출되어 사용자 이름을 입력받고 score와 함께 리스트의 적절한 위치에 저장
 	char str[NAMELEN+1];
 	int i, j;
-    char ch;
-    int cnt = 0;
 	clear();
-    
+
 	//1. 사용자 이름을 입력받음
-    echo();
+  echo();
 	printw("Enter your name: ");
-    ch = wgetch(stdscr);
-    while(ch != '\n' && cnt < NAMELEN){
-        str[cnt] = ch;
-        ch = wgetch(stdscr);
-        if(ch == '\n') break;
-        cnt ++;
-    }
-    noecho();
-    
+  scanw("%s", str);
+  noecho();
+
 	//2. 새로운 노드를 생성해 이름과 점수를 저장, score_number가
 	if(!str)
-        strcpy(str, "N/A");
-    insert(&ranklist, score, str);
-    score_number++;
+		strcpy(str, "N/A");
+  insert(&ranklist, score, str);
+  score_number++;
 	writeRankFile();
 }
 
