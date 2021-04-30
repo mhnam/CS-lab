@@ -8,6 +8,7 @@
 #include <ncurses.h>
 #include <signal.h>
 #include <string.h>
+#include <malloc.h>
 
 #define WIDTH	10
 #define HEIGHT	22
@@ -426,6 +427,6 @@ RecNode* createRecNode(RecNode* parent, int maxlv, int recBlockX, int recRotate)
 
 void travTree(RecNode* Node, int lv, RecNode** maxNode, int* maxScore);
 
-void freeTree(RecNode* Node);
+void freeTree(RecNode* Node, int lv);
 
 #endif

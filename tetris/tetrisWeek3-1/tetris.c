@@ -36,7 +36,7 @@ int main(){
 }
 
 void InitTetris(){
-	int i,j;
+	int i,j,k;
 
 	for(j=0;j<HEIGHT;j++)
 		for(i=0;i<WIDTH;i++)
@@ -52,6 +52,7 @@ void InitTetris(){
 	gameOver=0;
 	timed_out=0;
 
+        k = recommend(field, 2);
 	DrawOutline();
 	DrawField();
 	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate);
@@ -346,7 +347,7 @@ void BlockDown(int sig){
         nextBlock[2] = rand()%7;
         DrawNextBlock(nextBlock);
         printw("hi0", recScore); /*delete*/
-        recScore = recommend(field, 1); /*todo: current block만 고려*/
+        recScore = recommend(field, 2); /*todo: current block만 고려*/
 
         //initialise location of currentBlock
         blockRotate=0;
@@ -421,6 +422,7 @@ void DrawBlockWithFeatures(int y, int x, int blockID, int blockRotate){
     DrawField();
 	DrawBlock(y, x, blockID, blockRotate, ' ');
 	DrawShadow(y, x, blockID, blockRotate);
+        DrawRecommend(recommendY, recommendX, recRoot->curBlockID, recommendR);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -617,35 +619,33 @@ int recommend(char fieldOri[HEIGHT][WIDTH], int lv){
     int childCnt = 0;
     int travCnt = 0;
     int maxScore = 0;
-    printw("hi!!"); /*delete*/
     RecNode* maxNode = NULL;
-    
-    printw("hi1"); /*delete*/
 
     //tree 만들기
     RecNode* root = (RecNode*)malloc(sizeof(RecNode));
     root->lv = 0; root->score = score; memcpy(root->recField, fieldOri, sizeof(char)*HEIGHT*WIDTH);
     for(i = 0; i <= 3; i++){ /*all possible rotation*/
         for(j = 0; j <= 9; j++){ /*all possible location*/
-            root->children[childCnt++] = createRecNode(root, lv, j, i);
+            if(CheckToMove(root->recField, nextBlock[root->lv], i, -1, j))
+                root->children[childCnt++] = createRecNode(root, lv, j, i);
         }
     }
     
-    printw("hi2: %d", root); /*delete*/
-
     //max score 찾기
     maxNode = root;
     maxScore = root->score;
     travTree(root, lv, &maxNode, &maxScore);
-    printw("hi3: %d", maxScore); /*delete*/
     
     //draw recommend block on the field
     while(maxNode->lv == 1)
         maxNode = maxNode->parent;
-    DrawRecommend(maxNode->recBlockY, maxNode->recBlockX, maxNode->curBlockID, maxNode->recBlockRotate);
-    
+    recRoot = maxNode;
+    recommendR = maxNode -> recBlockRotate;
+    recommendY = maxNode -> recBlockY;
+    recommendX = maxNode -> recBlockX;
+
     //free memory
-    freeTree(root);
+    freeTree(root, lv);
     
     return maxScore;
 }
@@ -653,12 +653,12 @@ int recommend(char fieldOri[HEIGHT][WIDTH], int lv){
 RecNode* createRecNode(RecNode* parent, int maxlv, int recBlockX, int recRotate){
     if (parent->lv == maxlv-1){
         RecNode* child = (RecNode*)malloc(sizeof(RecNode));
-        child->lv = parent->lv++; /*should be maxlv*/
+        child->lv = (parent->lv)+1; /*should be maxlv*/
         child->score = parent->score;
         child->parent = parent;
         *(child->children) = NULL;
         memcpy(child->recField, parent->recField, sizeof(char)*HEIGHT*WIDTH);
-        child->curBlockID = nextBlock[(child->lv) - 1];
+        child->curBlockID = nextBlock[parent->lv];
         child->recBlockX = recBlockX;
         child->recBlockY = -1;
         child->recBlockRotate = recRotate;
@@ -671,11 +671,11 @@ RecNode* createRecNode(RecNode* parent, int maxlv, int recBlockX, int recRotate)
         int i, j;
         int childCnt = 0;
         RecNode* child = (RecNode*)malloc(sizeof(RecNode));
-        child->lv = parent->lv++; /*should be maxlv*/
+        child->lv = (parent->lv)+1; /*should be maxlv*/
         child->score = parent->score;
         child->parent = parent;
         memcpy(child->recField, parent->recField, sizeof(char)*HEIGHT*WIDTH);
-        child->curBlockID = nextBlock[(child->lv) - 1];
+        child->curBlockID = nextBlock[parent->lv];
         child->recBlockX = recBlockX;
         child->recBlockY = -1;
         child->recBlockRotate = recRotate;
@@ -684,7 +684,8 @@ RecNode* createRecNode(RecNode* parent, int maxlv, int recBlockX, int recRotate)
         child->score = DeleteLine(child->recField);
         for(i = 0; i <= 3; i++){ /*all possible rotation*/
             for(j = 0; j <= 9; j++){ /*all possible location*/
-                child->children[childCnt++] = createRecNode(child, maxlv, j, i);
+                if(CheckToMove(child->recField, nextBlock[child->lv], i, -1, j))
+                        child->children[childCnt++] = createRecNode(child, maxlv, j, i);
             }
         }
         return child;
@@ -693,19 +694,28 @@ RecNode* createRecNode(RecNode* parent, int maxlv, int recBlockX, int recRotate)
 
 void travTree(RecNode* Node, int lv, RecNode** maxNode, int* maxScore){
     int i = 0;
-    for(; Node; Node = Node->children[i++])
-        travTree(Node, lv, maxNode, maxScore);
-    if((Node->children == NULL) & (Node->score > *maxScore)){
-            *maxNode = Node; *maxScore = Node->score;
+    RecNode* travNode = NULL;
+    if(Node->lv == lv){
+      if(Node->score > *maxScore){
+        *maxNode = Node; *maxScore = Node->score;
+      }
+    }
+    else{
+        travNode = Node->children[i];
+        for(; travNode; travNode = Node->children[i++])
+                travTree(travNode, lv, maxNode, maxScore);
     }
 }
 
-void freeTree(RecNode* Node){
+void freeTree(RecNode* Node, int lv){
     int i = 0;
-    for(; Node; Node = Node->children[i++])
-        freeTree(Node);
-    if(Node->children == NULL)
-        free(Node);
+    RecNode* travNode = NULL;
+    if(Node->lv == lv)
+      free(Node);
+    else{
+        for(; travNode; travNode = travNode->children[i++])
+            freeTree(travNode, lv);
+    }
 }
 
 void recommendedPlay(){
