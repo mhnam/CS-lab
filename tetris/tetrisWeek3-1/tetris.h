@@ -201,7 +201,7 @@ int blockRotate,blockY,blockX;	/* 현재 블럭의 회전, 블럭의 Y 좌표, �
 int score;			/* 점수가 저장*/
 int gameOver=0;			/* 게임이 종료되면 1로 setting된다.*/
 int timed_out;
-int recommendR,recommendY,recommendX; // 추천 블럭 배치 정보. 차례대로 회전, Y 좌표, X 좌표
+int recommendR,recommendY,recommendX,recommendID; // 추천 블럭 배치 정보. 차례대로 회전, Y 좌표, X 좌표
 RecNode *recRoot;
 
 /***********************************************************
@@ -425,7 +425,11 @@ void DrawRecommend(int y, int x, int blockID,int blockRotate);
 
 RecNode* createRecNode(RecNode* parent, int maxlv, int recBlockX, int recRotate);
 
-void travTree(RecNode* Node, int lv, RecNode** maxNode, int* maxScore);
+int RecAddBlockToField(char f[HEIGHT][WIDTH],int currentBlock,int blockRotate, int blockY, int blockX);
+
+int RecDeleteLine(char f[HEIGHT][WIDTH], int childScore);
+
+void travTree(RecNode* Node, int lv, RecNode** maxNode, int* maxScore, int* fl);
 
 void freeTree(RecNode* Node, int lv);
 
