@@ -419,7 +419,7 @@ int RecAddBlockToField(char f[HEIGHT][WIDTH],int currentBlock,int blockRotate, i
             if(block[currentBlock][blockRotate][i][j]){
                 if (f[blockY+i+1][blockX+j] == 1)
                     touched++;
-                else if (blockY+i+1 == HEIGHT)
+                else if (blockY+i+1 >= HEIGHT)
                     buttomTouched++;
             }
         }
@@ -431,7 +431,7 @@ int RecAddBlockToField(char f[HEIGHT][WIDTH],int currentBlock,int blockRotate, i
             }
         }
     }
-    return touched * 10 + buttomTouched * 50 + blockY * 10;
+    return (touched * 10) + (buttomTouched * 100) + ((blockY+4) * 20);
 }
 
 int RecDeleteLine(char f[HEIGHT][WIDTH], int childScore){
@@ -460,7 +460,7 @@ int RecDeleteLine(char f[HEIGHT][WIDTH], int childScore){
         }
         fl = 1;
     }
-    childScore = childScore + (deletedline << 2)*100;
+    childScore = childScore + (deletedline << 2)*1000;
     return childScore;
 }
 
@@ -763,7 +763,7 @@ void travTree(RecNode* Node, int lv, RecNode** maxNode, int* maxScore, int* fl){
       }
     }
     else{
-        travNode = Node->children[i];
+        travNode = Node->children[0];
         for(; travNode; travNode = Node->children[i++])
                 travTree(travNode, lv, maxNode, maxScore, fl);
     }
