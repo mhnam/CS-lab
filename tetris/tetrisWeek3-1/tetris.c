@@ -25,7 +25,8 @@ int main(){
 		switch(menu()){
 		case MENU_PLAY: play(); break;
 		case MENU_RANK: rank(); break;
-    case MENU_EXIT: exit=1; break;
+        case MENU_EXIT: exit=1; break;
+        case MENU_RECOM: recPlayMode = 1; recommendedPlay(); break;
 		default: break;
 		}
 	}
@@ -328,6 +329,9 @@ void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,int blockRota
 void BlockDown(int sig){
     int recScore = 0;
     /*check whether can go down further*/
+    if(recPlayMode){
+        blockX = recommendX;
+    }
     if (CheckToMove(field, nextBlock[0], blockRotate, blockY+1, blockX)){
         blockY++;
         DrawChange(field, KEY_DOWN, nextBlock[0], blockRotate, blockY, blockX);
@@ -781,5 +785,48 @@ void freeTree(RecNode* Node, int lv){
 }
 
 void recommendedPlay(){
-	// user code
+	int command;
+	clear();
+	act.sa_handler = BlockDown;
+	sigaction(SIGALRM,&act,&oact);
+	InitTetris();
+	do{
+		if(timed_out==0){
+			ualarm(1);
+			timed_out=0;
+		}
+
+		command = GetCommand();
+		if(RecommendProcessCommand(command)==QUIT){
+			ualarm(0);
+			DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10);
+			move(HEIGHT/2,WIDTH/2-4);
+			printw("Good-bye!!");
+            recPlayMode=0;
+			refresh();
+			getch();
+            newRank(score);
+			return;
+		}
+	}while(!gameOver);
+
+	ualarm(0);
+	getch();
+    recPlayMode=0;
+	DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10);
+	move(HEIGHT/2,WIDTH/2-4);
+	printw("GameOver!!");
+	refresh();
+	getch();
+	newRank(score);
+}
+
+int RecommendProcessCommand(int command){
+	int ret=1;
+	int drawFlag=0;
+	switch(command){
+	case QUIT:
+		ret = QUIT;
+		break;
+	return ret;
 }

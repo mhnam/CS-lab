@@ -23,6 +23,7 @@
 // menu number
 #define MENU_PLAY '1'
 #define MENU_RANK '2'
+#define MENU_RECOM '3'
 #define MENU_EXIT '4'
 
 // 사용자 이름의 길이
@@ -202,6 +203,7 @@ int score;			/* 점수가 저장*/
 int gameOver=0;			/* 게임이 종료되면 1로 setting된다.*/
 int timed_out;
 int recommendR,recommendY,recommendX,recommendID; // 추천 블럭 배치 정보. 차례대로 회전, Y 좌표, X 좌표
+int recomMode=0;
 RecNode *recRoot;
 
 /***********************************************************
