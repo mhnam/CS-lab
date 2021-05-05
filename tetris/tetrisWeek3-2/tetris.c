@@ -845,7 +845,7 @@ void recommendedPlay(){
 		}
 
 		command = GetCommand();
-		if(ProcessCommand(command)==QUIT){
+		if(RecommendProcessCommand(command)==QUIT){
 			alarm(0);
 			DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10);
 			move(HEIGHT/2,WIDTH/2-4);
