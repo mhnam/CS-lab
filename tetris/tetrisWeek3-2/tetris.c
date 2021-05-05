@@ -53,7 +53,7 @@ void InitTetris(){
 	gameOver=0;
 	timed_out=0;
 
-    k = recommend(field, 2);
+    k = modified_recommend(field, 2);
 	DrawOutline();
 	DrawField();
 	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate);
@@ -330,14 +330,16 @@ void BlockDown(int sig){
     int recScore = 0;
     /*check whether can go down further*/
     if(recPlayMode){
-        if (blockX > recommendX)
-            blockX--;
-        else if (blockX < recommendX)
-            blockX++;
-        if (blockRotate > recommendR)
-            blockRotate = (blockRotate + 1) % 4;
-        else if (blockRotate < recommendR)
-            blockRotate = (blockRotate - 1) % 4;
+        // if (blockX > recommendX)
+        //     blockX--;
+        // else if (blockX < recommendX)
+        //     blockX++;
+        // if (blockRotate > recommendR)
+        //     blockRotate = (blockRotate - 1) % 4;
+        // else if (blockRotate < recommendR)
+        //     blockRotate = (blockRotate + 1) % 4;
+        blockX = recommendX;
+        blockRotate = recommendR;
     }
     if (CheckToMove(field, nextBlock[0], blockRotate, blockY+1, blockX)){
         blockY++;
@@ -357,7 +359,7 @@ void BlockDown(int sig){
         nextBlock[1] = nextBlock[2];
         nextBlock[2] = rand()%7;
         DrawNextBlock(nextBlock);
-        recScore = recommend(field, 2); /*todo: current block만 고려*/
+        recScore = modified_recommend(field, 2); /*todo: current block만 고려*/
 
         //initialise location of currentBlock
         blockRotate=0;
@@ -717,6 +719,46 @@ int recommend(char fieldOri[HEIGHT][WIDTH], int lv){
     return maxScore;
 }
 
+int modified_recommend(char fieldOri[HEIGHT][WIDTH], int lv){
+    int i, j, k;
+    int childCnt = 0;
+    int travCnt = 0;
+    int maxScore = 0;
+    int fl = 0;
+    RecNode* maxNode = NULL;
+
+    //tree 만들기: greedy algorithm
+    // RecNode* root = (RecNode*)malloc(sizeof(RecNode));
+    RecNode* root = (RecNode*)calloc(1, sizeof(RecNode));
+    root->lv = 0; root->score = score; memcpy(root->recField, fieldOri, sizeof(char)*HEIGHT*WIDTH);
+    maxNode = root;
+    maxScore = root->score;
+
+    for(k = 1; k <= lv; k++){
+        for(i = 0; i <= 3; i++){ /*all possible rotation*/
+            for(j = 0; j <= 9; j++){ /*all possible location*/
+                if(CheckToMove(maxNode->recField, nextBlock[maxNode->lv], i, -1, j))
+                    maxNode->children[childCnt++] = createRecNode(maxNode, k, j, i);
+            }
+        }
+        //max score 찾기
+        travTree(maxNode, k, &maxNode, &maxScore, &fl);
+    }
+    
+    //draw recommend block on the field
+    while(maxNode->lv > 1)
+        maxNode = maxNode->parent;
+    recommendID = maxNode -> curBlockID;
+    recommendR = maxNode -> recBlockRotate;
+    recommendY = maxNode -> recBlockY;
+    recommendX = maxNode -> recBlockX;
+
+    //free memory
+    freeTree(root, lv);
+    
+    return maxScore;
+}
+
 RecNode* createRecNode(RecNode* parent, int maxlv, int recBlockX, int recRotate){
     if (parent->lv == maxlv-1){
         // RecNode* child = (RecNode*)malloc(sizeof(RecNode));
@@ -803,7 +845,7 @@ void recommendedPlay(){
 		}
 
 		command = GetCommand();
-		if(RecommendProcessCommand(command)==QUIT){
+		if(ProcessCommand(command)==QUIT){
 			alarm(0);
 			DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10);
 			move(HEIGHT/2,WIDTH/2-4);

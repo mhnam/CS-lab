@@ -437,4 +437,8 @@ void freeTree(RecNode* Node, int lv);
 
 int RecommendProcessCommand(int command);
 
+int modified_recommend(char fieldOri[HEIGHT][WIDTH],int lv);
+
+
+
 #endif
