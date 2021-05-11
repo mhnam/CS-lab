@@ -8,6 +8,7 @@
 #include <ncurses.h>
 #include <signal.h>
 #include <string.h>
+#include <malloc.h>
 
 #define WIDTH	10
 #define HEIGHT	22
@@ -22,16 +23,26 @@
 // menu number
 #define MENU_PLAY '1'
 #define MENU_RANK '2'
+#define MENU_RECOM '3'
 #define MENU_EXIT '4'
 
 // 사용자 이름의 길이
 #define NAMELEN 16
 #define CHILDREN_MAX 36
 
-typedef struct _RecNode{
+typedef struct ModRecNode{
 	int lv,score;
 	char (*f)[WIDTH];
 	struct _RecNode *c[CHILDREN_MAX];
+} ModRecNode;
+
+typedef struct RecNode{
+	int lv,score;
+    struct RecNode *parent;
+	struct RecNode *children[CHILDREN_MAX];
+	char recField[HEIGHT][WIDTH];
+    int curBlockID;
+    int recBlockX, recBlockY, recBlockRotate;
 } RecNode;
 
 typedef struct RankNode* RankPointer;
@@ -191,7 +202,8 @@ int blockRotate,blockY,blockX;	/* 현재 블럭의 회전, 블럭의 Y 좌표, �
 int score;			/* 점수가 저장*/
 int gameOver=0;			/* 게임이 종료되면 1로 setting된다.*/
 int timed_out;
-int recommendR,recommendY,recommendX; // 추천 블럭 배치 정보. 차례대로 회전, Y 좌표, X 좌표
+int recommendR,recommendY,recommendX,recommendID; // 추천 블럭 배치 정보. 차례대로 회전, Y 좌표, X 좌표
+int recPlayMode=0;
 RecNode *recRoot;
 
 /***********************************************************
@@ -412,6 +424,21 @@ int recommend(char fieldOri[HEIGHT][WIDTH],int lv);
 void recommendedPlay();
 
 void DrawRecommend(int y, int x, int blockID,int blockRotate);
+
+RecNode* createRecNode(RecNode* parent, int maxlv, int recBlockX, int recRotate);
+
+int RecAddBlockToField(char f[HEIGHT][WIDTH],int currentBlock,int blockRotate, int blockY, int blockX);
+
+int RecDeleteLine(char f[HEIGHT][WIDTH], int childScore);
+
+void travTree(RecNode* Node, int lv, RecNode** maxNode, int* maxScore, int* fl);
+
+void freeTree(RecNode* Node, int lv);
+
+int RecommendProcessCommand(int command);
+
+int modified_recommend(char fieldOri[HEIGHT][WIDTH],int lv);
+
 
 
 #endif

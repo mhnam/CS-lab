@@ -346,7 +346,6 @@ void BlockDown(int sig){
         nextBlock[1] = nextBlock[2];
         nextBlock[2] = rand()%7;
         DrawNextBlock(nextBlock);
-        printw("hi0", recScore); /*delete*/
         recScore = recommend(field, 2); /*todo: current block만 고려*/
 
         //initialise location of currentBlock
@@ -416,12 +415,18 @@ int RecAddBlockToField(char f[HEIGHT][WIDTH],int currentBlock,int blockRotate, i
     int buttomTouched = 0;
     for(i=0; i<4; i++){
         for(j=0; j<4; j++){
-            if(block[currentBlock][blockRotate][i][j]){
-                if (f[blockY+i+1][blockX+j] == 1)
-                    touched++;
-                else if (blockY+i+1 >= HEIGHT)
-                    buttomTouched++;
-            }
+					if(block[currentBlock][blockRotate][i][j]){
+							if (f[blockY+i+1][blockX+j] == 1)
+									touched++;
+							if (f[blockY+i+1][blockX+j] == 1)
+									touched++;
+							if (blockY+i+1 >= HEIGHT)
+									buttomTouched++;
+							if (blockX+j == 0)
+									buttomTouched++;
+							if (blockX+j+1 >= WIDTH)
+									buttomTouched++;
+							}
         }
     }
     for(i=0; i<4; i++){
@@ -431,7 +436,7 @@ int RecAddBlockToField(char f[HEIGHT][WIDTH],int currentBlock,int blockRotate, i
             }
         }
     }
-    return (touched * 10) + (buttomTouched * 100) + ((blockY+4) * 20);
+		return (touched * 10) + (buttomTouched * 30) + ((blockY+4) * 50);
 }
 
 int RecDeleteLine(char f[HEIGHT][WIDTH], int childScore){
@@ -687,12 +692,12 @@ int recommend(char fieldOri[HEIGHT][WIDTH], int lv){
                 root->children[childCnt++] = createRecNode(root, lv, j, i);
         }
     }
-    
+
     //max score 찾기
     maxNode = root;
     maxScore = root->score;
     travTree(root, lv, &maxNode, &maxScore, &fl);
-    
+
     //draw recommend block on the field
     while(maxNode->lv > 1)
         maxNode = maxNode->parent;
@@ -703,7 +708,7 @@ int recommend(char fieldOri[HEIGHT][WIDTH], int lv){
 
     //free memory
     freeTree(root, lv);
-    
+
     return maxScore;
 }
 

@@ -1,9 +1,3 @@
-/*
-TODO
-* space 누르면 제일 밑으로 내려가도록 구현
-* rank 기능 2가지 추가구현
-*/
-
 #include "tetris.h"
 
 static struct sigaction act, oact;
@@ -26,6 +20,7 @@ int main(){
 		case MENU_PLAY: play(); break;
 		case MENU_RANK: rank(); break;
     case MENU_EXIT: exit=1; break;
+    case MENU_RECOM: recPlayMode = 1; recommendedPlay(); break;
 		default: break;
 		}
 	}
@@ -36,7 +31,7 @@ int main(){
 }
 
 void InitTetris(){
-	int i,j;
+	int i,j,k;
 
 	for(j=0;j<HEIGHT;j++)
 		for(i=0;i<WIDTH;i++)
@@ -52,6 +47,7 @@ void InitTetris(){
 	gameOver=0;
 	timed_out=0;
 
+  k = modified_recommend(field, 2);
 	DrawOutline();
 	DrawField();
 	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate);
@@ -325,7 +321,18 @@ void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,int blockRota
 }
 
 void BlockDown(int sig){
+    int recScore = 0;
     /*check whether can go down further*/
+    if(recPlayMode){
+        if (blockX > recommendX)
+            blockX--;
+        else if (blockX < recommendX)
+            blockX++;
+        if (blockRotate > recommendR)
+            blockRotate = (blockRotate - 1) % 4;
+        else if (blockRotate < recommendR)
+            blockRotate = (blockRotate + 1) % 4;
+    }
     if (CheckToMove(field, nextBlock[0], blockRotate, blockY+1, blockX)){
         blockY++;
         DrawChange(field, KEY_DOWN, nextBlock[0], blockRotate, blockY, blockX);
@@ -344,6 +351,7 @@ void BlockDown(int sig){
         nextBlock[1] = nextBlock[2];
         nextBlock[2] = rand()%7;
         DrawNextBlock(nextBlock);
+        recScore = modified_recommend(field, 2); /*todo: current block만 고려*/
 
         //initialise location of currentBlock
         blockRotate=0;
@@ -405,6 +413,67 @@ int DeleteLine(char f[HEIGHT][WIDTH]){
     return score;
 }
 
+int RecAddBlockToField(char f[HEIGHT][WIDTH],int currentBlock,int blockRotate, int blockY, int blockX){
+	//Block이 추가된 영역의 필드값을 바꾼다.
+    int i, j;
+    int touched = 0;
+    int buttomTouched = 0;
+    for(i=0; i<4; i++){
+        for(j=0; j<4; j++){
+            if(block[currentBlock][blockRotate][i][j]){
+                if (f[blockY+i+1][blockX+j] == 1)
+                    touched++;
+								if (f[blockY+i+1][blockX+j] == 1)
+                    touched++;
+                if (blockY+i+1 >= HEIGHT)
+                    buttomTouched++;
+								if (blockX+j == 0)
+										buttomTouched++;
+								if (blockX+j+1 >= WIDTH)
+                    buttomTouched++;
+            }
+        }
+    }
+    for(i=0; i<4; i++){
+        for(j=0; j<4; j++){
+            if(block[currentBlock][blockRotate][i][j]){
+                f[blockY+i][blockX+j] = 1;
+            }
+        }
+    }
+    return (touched * 10) + (buttomTouched * 30) + ((blockY+4) * 50);
+}
+
+int RecDeleteLine(char f[HEIGHT][WIDTH], int childScore){
+    //1. 필드를 탐색하여, 꽉 찬 구간이 있는지 탐색한다.
+	//2. 꽉 찬 구간이 있으면 해당 구간을 지운다. 즉, 해당 구간으로 필드값을 한칸씩 내린다.
+    int i, j, k, l;
+    int fl = 1;
+    int deletedline = 0;
+    for(i=HEIGHT-1; i>=0; i--){
+        for(j=0; j<WIDTH; j++){
+            if(f[i][j] == 0){
+                fl = 0;
+            }
+            if((j == WIDTH - 1) && (fl == 1)){ /*if the row is filled till the end*/
+                deletedline ++;
+                /*then delete whole line*/
+                for(k=i-1; k>=0; k--){
+                    for(l=0; l<WIDTH; l++){
+                        f[k+1][l] = f[k][l]; /*update whole field from previous row*/
+                        if(k == 0){
+                            f[k][l] = 0; /*initialise as 0 for the first row*/
+                        }
+                    }
+                }
+            }
+        }
+        fl = 1;
+    }
+    childScore = childScore + (deletedline << 2)*1000;
+    return childScore;
+}
+
 void DrawShadow(int y, int x, int blockID,int blockRotate){
     int i=y;
     for(i=y; i<HEIGHT-1; i++){
@@ -415,9 +484,10 @@ void DrawShadow(int y, int x, int blockID,int blockRotate){
 }
 
 void DrawBlockWithFeatures(int y, int x, int blockID, int blockRotate){
-    DrawField();
+  DrawField();
 	DrawBlock(y, x, blockID, blockRotate, ' ');
 	DrawShadow(y, x, blockID, blockRotate);
+  DrawRecommend(recommendY, recommendX, recommendID, recommendR);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -583,22 +653,6 @@ void writeRankFile(){
     }
 
     fclose(fp);
-
-    //     for(; ranklist; ranklist = ranklist->next){
-    //         ranklist->next = ranklist->next->next;
-    //         free(ranklist->next)
-    //     }
-    //     free(ranklist);
-	// if ( sn == score_number) return;
-	// else {
-
-
-	// }
-	// for ( i= 1; i < score_number+1 ; i++) {
-	// 	free(a.rank_name[i]);
-	// }
-	// free(a.rank_name);
-	// free(a.rank_score);
 }
 
 void newRank(int score){
@@ -622,13 +676,204 @@ void newRank(int score){
 }
 
 void DrawRecommend(int y, int x, int blockID,int blockRotate){
-	// user code
+	DrawBlock(y, x, blockID, blockRotate, 'R');
 }
 
-int recommend(char fieldOri[HEIGHT][WIDTH],int lv){
+int recommend(char fieldOri[HEIGHT][WIDTH], int lv){
+    int i, j;
+    int childCnt = 0;
+    int travCnt = 0;
+    int maxScore = 0;
+    int fl = 0;
+    RecNode* maxNode = NULL;
 
+    //tree 만들기
+    // RecNode* root = (RecNode*)malloc(sizeof(RecNode));
+    RecNode* root = (RecNode*)calloc(1, sizeof(RecNode));
+    root->lv = 0; root->score = score; memcpy(root->recField, fieldOri, sizeof(char)*HEIGHT*WIDTH);
+    for(i = 0; i <= 3; i++){ /*all possible rotation*/
+        for(j = 0; j <= 9; j++){ /*all possible location*/
+            if(CheckToMove(root->recField, nextBlock[root->lv], i, -1, j))
+                root->children[childCnt++] = createRecNode(root, lv, j, i);
+        }
+    }
+
+    //max score 찾기
+    maxNode = root;
+    maxScore = root->score;
+    travTree(root, lv, &maxNode, &maxScore, &fl);
+
+    //draw recommend block on the field
+    while(maxNode->lv > 1)
+        maxNode = maxNode->parent;
+    recommendID = maxNode -> curBlockID;
+    recommendR = maxNode -> recBlockRotate;
+    recommendY = maxNode -> recBlockY;
+    recommendX = maxNode -> recBlockX;
+
+    //free memory
+    freeTree(root, lv);
+
+    return maxScore;
+}
+
+int modified_recommend(char fieldOri[HEIGHT][WIDTH], int lv){
+    int i, j, k;
+    int childCnt = 0;
+    int travCnt = 0;
+    int maxScore = 0;
+    int fl = 0;
+    RecNode* maxNode = NULL;
+
+    //tree 만들기: greedy algorithm
+    // RecNode* root = (RecNode*)malloc(sizeof(RecNode));
+    RecNode* root = (RecNode*)calloc(1, sizeof(RecNode));
+    root->lv = 0; root->score = score; memcpy(root->recField, fieldOri, sizeof(char)*HEIGHT*WIDTH);
+    maxNode = root;
+    maxScore = root->score;
+
+    for(k = 1; k <= lv; k++){
+        for(i = 0; i <= 3; i++){ /*all possible rotation*/
+            for(j = 0; j <= 9; j++){ /*all possible location*/
+                if(CheckToMove(maxNode->recField, nextBlock[maxNode->lv], i, -1, j))
+                    maxNode->children[childCnt++] = createRecNode(maxNode, k, j, i);
+            }
+        }
+        //max score 찾기
+        travTree(maxNode, k, &maxNode, &maxScore, &fl);
+    }
+
+    //draw recommend block on the field
+    while(maxNode->lv > 1)
+        maxNode = maxNode->parent;
+    recommendID = maxNode -> curBlockID;
+    recommendR = maxNode -> recBlockRotate;
+    recommendY = maxNode -> recBlockY;
+    recommendX = maxNode -> recBlockX;
+
+    //free memory
+    freeTree(root, lv);
+
+    return maxScore;
+}
+
+RecNode* createRecNode(RecNode* parent, int maxlv, int recBlockX, int recRotate){
+    if (parent->lv == maxlv-1){
+        // RecNode* child = (RecNode*)malloc(sizeof(RecNode));
+        RecNode* child = (RecNode*)calloc(1, sizeof(RecNode));
+        child->lv = (parent->lv)+1; /*should be maxlv*/
+        child->score = parent->score;
+        child->parent = parent;
+        *(child->children) = NULL;
+        memcpy(child->recField, parent->recField, sizeof(char)*HEIGHT*WIDTH);
+        child->curBlockID = nextBlock[parent->lv];
+        child->recBlockX = recBlockX;
+        child->recBlockY = -1;
+        child->recBlockRotate = recRotate;
+        while(CheckToMove(child->recField, child->curBlockID, child->recBlockRotate, child->recBlockY+1, child->recBlockX)) (child->recBlockY)++;
+        child->score = (child->score) + RecAddBlockToField(child->recField, child->curBlockID, child->recBlockRotate, child->recBlockY, child->recBlockX);
+        child->score = RecDeleteLine(child->recField, child->score);
+        return child;
+    }
+    else{
+        int i, j;
+        int childCnt = 0;
+        // RecNode* child = (RecNode*)malloc(sizeof(RecNode));
+        RecNode* child = (RecNode*)calloc(1, sizeof(RecNode));
+        child->lv = (parent->lv)+1; /*should be maxlv*/
+        child->score = parent->score;
+        child->parent = parent;
+        memcpy(child->recField, parent->recField, sizeof(char)*HEIGHT*WIDTH);
+        child->curBlockID = nextBlock[parent->lv];
+        child->recBlockX = recBlockX;
+        child->recBlockY = -1;
+        child->recBlockRotate = recRotate;
+        while(CheckToMove(child->recField, child->curBlockID, child->recBlockRotate, child->recBlockY+1, child->recBlockX)) (child->recBlockY)++;
+        child->score = (child->score) + RecAddBlockToField(child->recField, child->curBlockID, child->recBlockRotate, child->recBlockY, child->recBlockX);
+        child->score = RecDeleteLine(child->recField, child->score);
+        for(i = 0; i <= 3; i++){ /*all possible rotation*/
+            for(j = 0; j <= 9; j++){ /*all possible location*/
+                if(CheckToMove(child->recField, nextBlock[child->lv], i, -1, j))
+                        child->children[childCnt++] = createRecNode(child, maxlv, j, i);
+            }
+        }
+        return child;
+    }
+}
+
+void travTree(RecNode* Node, int lv, RecNode** maxNode, int* maxScore, int* fl){
+    int i = 0;
+    RecNode* travNode = NULL;
+    if(Node->lv == lv){
+        if(fl == 0){
+            *maxNode = Node; *maxScore = Node->score; *fl = 1;
+        }
+      if(Node->score > *maxScore){
+        *maxNode = Node; *maxScore = Node->score;
+      }
+    }
+    else{
+        travNode = Node->children[0];
+        for(; travNode; travNode = Node->children[i++])
+                travTree(travNode, lv, maxNode, maxScore, fl);
+    }
+}
+
+void freeTree(RecNode* Node, int lv){
+    int i = 0;
+    RecNode* travNode = NULL;
+    if(Node->lv == lv)
+      free(Node);
+    else{
+        for(; travNode; travNode = travNode->children[i++])
+            freeTree(travNode, lv);
+    }
 }
 
 void recommendedPlay(){
-	// user code
+	int command;
+	clear();
+	act.sa_handler = BlockDown;
+	sigaction(SIGALRM,&act,&oact);
+	InitTetris();
+	do{
+		if(timed_out==0){
+			alarm(1);
+			timed_out=0;
+		}
+
+		command = GetCommand();
+		if(ProcessCommand(command)==QUIT){
+			alarm(0);
+			DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10);
+			move(HEIGHT/2,WIDTH/2-4);
+			printw("Good-bye!!");
+      recPlayMode=0;
+			refresh();
+			getch();
+      newRank(score);
+			return;
+		}
+	}while(!gameOver);
+
+	alarm(0);
+	getch();
+  recPlayMode=0;
+	DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10);
+	move(HEIGHT/2,WIDTH/2-4);
+	printw("GameOver!!");
+	refresh();
+	getch();
+	newRank(score);
+}
+
+int RecommendProcessCommand(int command){
+	int ret=1;
+	int drawFlag=0;
+	switch(command){
+	case QUIT:
+		ret = QUIT;
+		break;
+	return ret;
+    }
 }

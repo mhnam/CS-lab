@@ -1,9 +1,3 @@
-/*
-TODO
-* space 누르면 제일 밑으로 내려가도록 구현
-* rank 기능 2가지 추가구현
-*/
-
 #include "tetris.h"
 
 static struct sigaction act, oact;
@@ -25,8 +19,8 @@ int main(){
 		switch(menu()){
 		case MENU_PLAY: play(); break;
 		case MENU_RANK: rank(); break;
-        case MENU_EXIT: exit=1; break;
-        case MENU_RECOM: recPlayMode = 1; recommendedPlay(); break;
+    case MENU_EXIT: exit=1; break;
+    case MENU_RECOM: recPlayMode = 1; recommendedPlay(); break;
 		default: break;
 		}
 	}
@@ -53,7 +47,7 @@ void InitTetris(){
 	gameOver=0;
 	timed_out=0;
 
-    k = modified_recommend(field, 2);
+  k = modified_recommend(field, 2);
 	DrawOutline();
 	DrawField();
 	DrawBlockWithFeatures(blockY,blockX,nextBlock[0],blockRotate);
@@ -330,16 +324,14 @@ void BlockDown(int sig){
     int recScore = 0;
     /*check whether can go down further*/
     if(recPlayMode){
-        // if (blockX > recommendX)
-        //     blockX--;
-        // else if (blockX < recommendX)
-        //     blockX++;
-        // if (blockRotate > recommendR)
-        //     blockRotate = (blockRotate - 1) % 4;
-        // else if (blockRotate < recommendR)
-        //     blockRotate = (blockRotate + 1) % 4;
-        blockX = recommendX;
-        blockRotate = recommendR;
+        if (blockX > recommendX)
+            blockX--;
+        else if (blockX < recommendX)
+            blockX++;
+        if (blockRotate > recommendR)
+            blockRotate = (blockRotate - 1) % 4;
+        else if (blockRotate < recommendR)
+            blockRotate = (blockRotate + 1) % 4;
     }
     if (CheckToMove(field, nextBlock[0], blockRotate, blockY+1, blockX)){
         blockY++;
@@ -431,7 +423,13 @@ int RecAddBlockToField(char f[HEIGHT][WIDTH],int currentBlock,int blockRotate, i
             if(block[currentBlock][blockRotate][i][j]){
                 if (f[blockY+i+1][blockX+j] == 1)
                     touched++;
-                else if (blockY+i+1 >= HEIGHT)
+								if (f[blockY+i+1][blockX+j] == 1)
+                    touched++;
+                if (blockY+i+1 >= HEIGHT)
+                    buttomTouched++;
+								if (blockX+j == 0)
+										buttomTouched++;
+								if (blockX+j+1 >= WIDTH)
                     buttomTouched++;
             }
         }
@@ -443,7 +441,7 @@ int RecAddBlockToField(char f[HEIGHT][WIDTH],int currentBlock,int blockRotate, i
             }
         }
     }
-    return (touched * 10) + (buttomTouched * 100) + ((blockY+4) * 20);
+    return (touched * 10) + (buttomTouched * 30) + ((blockY+4) * 50);
 }
 
 int RecDeleteLine(char f[HEIGHT][WIDTH], int childScore){
@@ -486,10 +484,10 @@ void DrawShadow(int y, int x, int blockID,int blockRotate){
 }
 
 void DrawBlockWithFeatures(int y, int x, int blockID, int blockRotate){
-    DrawField();
+  DrawField();
 	DrawBlock(y, x, blockID, blockRotate, ' ');
 	DrawShadow(y, x, blockID, blockRotate);
-    DrawRecommend(recommendY, recommendX, recommendID, recommendR);
+  DrawRecommend(recommendY, recommendX, recommendID, recommendR);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -699,12 +697,12 @@ int recommend(char fieldOri[HEIGHT][WIDTH], int lv){
                 root->children[childCnt++] = createRecNode(root, lv, j, i);
         }
     }
-    
+
     //max score 찾기
     maxNode = root;
     maxScore = root->score;
     travTree(root, lv, &maxNode, &maxScore, &fl);
-    
+
     //draw recommend block on the field
     while(maxNode->lv > 1)
         maxNode = maxNode->parent;
@@ -715,7 +713,7 @@ int recommend(char fieldOri[HEIGHT][WIDTH], int lv){
 
     //free memory
     freeTree(root, lv);
-    
+
     return maxScore;
 }
 
@@ -744,7 +742,7 @@ int modified_recommend(char fieldOri[HEIGHT][WIDTH], int lv){
         //max score 찾기
         travTree(maxNode, k, &maxNode, &maxScore, &fl);
     }
-    
+
     //draw recommend block on the field
     while(maxNode->lv > 1)
         maxNode = maxNode->parent;
@@ -755,7 +753,7 @@ int modified_recommend(char fieldOri[HEIGHT][WIDTH], int lv){
 
     //free memory
     freeTree(root, lv);
-    
+
     return maxScore;
 }
 
@@ -845,22 +843,22 @@ void recommendedPlay(){
 		}
 
 		command = GetCommand();
-		if(RecommendProcessCommand(command)==QUIT){
+		if(ProcessCommand(command)==QUIT){
 			alarm(0);
 			DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10);
 			move(HEIGHT/2,WIDTH/2-4);
 			printw("Good-bye!!");
-            recPlayMode=0;
+      recPlayMode=0;
 			refresh();
 			getch();
-            newRank(score);
+      newRank(score);
 			return;
 		}
 	}while(!gameOver);
 
 	alarm(0);
 	getch();
-    recPlayMode=0;
+  recPlayMode=0;
 	DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10);
 	move(HEIGHT/2,WIDTH/2-4);
 	printw("GameOver!!");
