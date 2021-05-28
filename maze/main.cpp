@@ -19,7 +19,11 @@ int main(){
 void create_maze(int width, int height){
     int i, j, k, l, fl, tmp;
     int cnt=5;
-    int maze[2*height+1][2*width+1];
+    int** maze = (int**)malloc(sizeof(int*) * (2*height+1));
+    maze[0] = (int*)malloc(sizeof(int) * (2*height+1) * (2*width+1));
+    for(i=1; i<2*height+1; i++)
+        maze[i] = maze[i-1] + (2*width+1);
+    
     FILE *fp = fopen("maze0.maz", "w");
     srand(time(NULL));
 
@@ -42,26 +46,7 @@ void create_maze(int width, int height){
         //step 1: init the first row
         for(j=1; j<2*width; j=j+2){
             if(maze[i][j] == 0){
-                if(i>=3 && i<=2*(height-1)){
-                    if(maze[i][j+2] != 0 && maze[i][j+1] == 4)
-                        maze[i][j] == maze[i][j+2];
-                    else if (maze[i][j-2] != 0 && maze[i][j-1] == 4)
-                        maze[i][j] == maze[i][j-2];
-                    else
-                        maze[i][j] = cnt++;
-                }
-                else if (i == 1){
-                    if(maze[i][j+2] != 0 && maze[i][j+1] == 4)
-                        maze[i][j] == maze[i][j+2];
-                    else
-                        maze[i][j] = cnt++;
-                }
-                else{
-                    if(maze[i][j-2] != 0 && maze[i][j-1] == 4)
-                        maze[i][j] == maze[i][j-2];
-                    else
-                        maze[i][j] = cnt++;
-                }
+                maze[i][j] = cnt++;
             }
         }
         
@@ -79,7 +64,7 @@ void create_maze(int width, int height){
 
         if(i>(height-1)*2) break;
 
-        //step 3: randomly connect with the previous row
+        //step 3: randomly connect with the next row
         tmp = maze[i][0]; fl = 1;
         for(j=1; j<2*width; j=j+2){
            if(tmp != maze[i][j]){
@@ -105,20 +90,20 @@ void create_maze(int width, int height){
             maze[2*height-1][i+1] = 4;
 
     //print maze
-    // for(i=0; i<2*height+1; i++){
-    //     for(j=0; j<2*width+1; j++){
-    //         switch (maze[i][j]){
-    //         case 0: printf("0\t"); break;
-    //         case 1: printf("|\t"); break;
-    //         case 2: printf("-\t"); break;
-    //         case 3: printf("+\t"); break;
-    //         case 4: printf(" \t"); break;
-    //         default:
-    //             printf("%d\t", maze[i][j]); break;
-    //         }
-    //     }
-    //     printf("\n");
-    // }
+    for(i=0; i<2*height+1; i++){
+        for(j=0; j<2*width+1; j++){
+            switch (maze[i][j]){
+            case 0: printf("0"); break;
+            case 1: printf("|"); break;
+            case 2: printf("-"); break;
+            case 3: printf("+"); break;
+            case 4: printf(" "); break;
+            default:
+                printf(" "); break;
+            }
+        }
+        printf("\n");
+    }
 
     for(i=0; i<2*height+1; i++){
         for(j=0; j<2*width+1; j++){
@@ -135,4 +120,6 @@ void create_maze(int width, int height){
         fprintf(fp, "\n");
     }
     fclose(fp);
+    free(maze[0]);
+    free(maze);
 }
