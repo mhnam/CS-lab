@@ -81,7 +81,6 @@ void ofApp::draw() {
 				else fl = 1;
 				num_of_drop++;
 			}
-			delete[] droparray;
 		}
 	}
 }
